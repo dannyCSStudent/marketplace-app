@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
+import { Console } from 'console';
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -28,6 +29,7 @@ export const registerUser = async (req: Request, res: Response) => {
         id: user.id
       }
     };
+    console.log("my key :",  process.env.JWT_SECRET)
 
     jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '1h' }, (err, token) => {
       if (err) throw err;

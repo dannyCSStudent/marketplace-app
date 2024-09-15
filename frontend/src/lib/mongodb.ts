@@ -14,6 +14,8 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined
 }
 
+console.log("key in node: ", process.env.NODE_ENV)
+
 if (process.env.NODE_ENV === 'development') {
   // In development mode, use a global variable so that the value
   // is preserved across module reloads caused by HMR (Hot Module Replacement).
