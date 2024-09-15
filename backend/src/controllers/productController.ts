@@ -1,57 +1,68 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Product from '../models/Product';
+import { NotFoundError, BadRequestError } from '../utils/CustomError';
 
-export const createProduct = async (req: Request, res: Response) => {
+export const createProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const newProduct = new Product(req.body);
+    const newProduct = new Product({
+      ...req.body,
+      seller_id: req.auth.userId,
+    });
     const savedProduct = await newProduct.save();
-    res.status(201).json(savedProduct);
+    res.status(201).json({ success: true, data: savedProduct });
   } catch (error) {
-    res.status(400).json({ message: 'Error creating product', error });
+    next(new BadRequestError('Error creating product'));
   }
 };
 
-export const getProducts = async (req: Request, res: Response) => {
+export const getProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const products = await Product.find();
-    res.json(products);
+    res.status(200).json({ success: true, data: products });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching products', error });
+    next(error);
   }
 };
 
-export const getProductById = async (req: Request, res: Response) => {
+export const getProductById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      throw new NotFoundError('Product not found');
     }
-    res.json(product);
+    res.status(200).json({ success: true, data: product });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching product', error });
+    next(error);
   }
 };
 
-export const updateProduct = async (req: Request, res: Response) => {
+export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedProduct = await Product.findOneAndUpdate(
+      { _id: req.params.id, seller_id: req.auth.userId },
+      req.body,
+      { new: true }
+    );
     if (!updatedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+      throw new NotFoundError('Product not found or you do not have permission to update');
     }
-    res.json(updatedProduct);
+    res.status(200).json({ success: true, data: updatedProduct });
   } catch (error) {
-    res.status(400).json({ message: 'Error updating product', error });
+    next(error);
   }
 };
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const deleteProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+    const deletedProduct = await Product.findOneAndDelete({
+      _id: req.params.id,
+      seller_id: req.auth.userId,
+    });
     if (!deletedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+      throw new NotFoundError('Product not found or you do not have permission to delete');
     }
-    res.json({ message: 'Product deleted successfully' });
+    res.status(200).json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting product', error });
+    next(error);
   }
 };

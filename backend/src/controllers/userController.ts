@@ -1,72 +1,44 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
-import { Console } from 'console';
+import { NotFoundError, BadRequestError } from '../utils/CustomError';
 
-export const registerUser = async (req: Request, res: Response) => {
+export const getProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, email, password } = req.body;
-
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+    const user = req.user;
+    if (!user) {
+      throw new NotFoundError('User not found');
     }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    user = new User({
-      username,
-      email,
-      password: hashedPassword
-    });
-
-    await user.save();
-
-    const payload = {
-      user: {
-        id: user.id
-      }
-    };
-    console.log("my key :",  process.env.JWT_SECRET)
-
-    jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '1h' }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    res.json({ success: true, data: user });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const loginUser = async (req: Request, res: Response) => {
+export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = req.body;
-
-    let user = await User.findOne({ email });
+    const user = req.user;
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      throw new NotFoundError('User not found');
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+    const { username, bio, languages } = req.body;
 
-    const payload = {
-      user: {
-        id: user.id
+    if (username) user.username = username;
+    if (bio) user.bio = bio;
+    if (languages) user.languages = languages;
+
+    await user.save();
+
+    res.json({ success: true, data: user });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.name === 'ValidationError') {
+        next(new BadRequestError(error.message));
+      } else {
+        next(new BadRequestError('Error updating user profile'));
       }
-    };
-
-    jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '1h' }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    } else {
+      next(new BadRequestError('An unknown error occurred'));
+    }
   }
 };
