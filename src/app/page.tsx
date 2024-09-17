@@ -1,16 +1,61 @@
-import { UserButton } from "@clerk/nextjs";
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { NavigationProp } from '@react-navigation/native';
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Welcome to the Global Selling App
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <UserButton />
-        </div>
-      </div>
-    </main>
-  );
+interface HomeScreenProps {
+  navigation: NavigationProp<any>;
 }
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Welcome to Global Product Selling App</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('SearchResults')}
+      >
+        <Text style={styles.buttonText}>Search Products</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('UserProfile')}
+      >
+        <Text style={styles.buttonText}>My Profile</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('NewListingForm')}
+      >
+        <Text style={styles.buttonText}>Create Listing</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 10,
+    width: '80%',
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+});
+
+export default HomeScreen;
